@@ -5,6 +5,7 @@ use utils::app_state::AppState;
 
 mod utils;
 mod routes;
+mod init;
 
 
 
@@ -24,7 +25,8 @@ async fn main() -> std::io::Result<()> {
     let database_url = (*utils::constants::DATABASE_URL).clone();
 
     let db: DatabaseConnection = Database::connect(database_url).await.unwrap();
-    Migrator::up(&db, None).await.unwrap();
+    init::create_tables_if_not_exists(&db).await;
+    // Migrator::up(&db, None).await.unwrap();
 
     HttpServer::new(move || {
         App::new()
