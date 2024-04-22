@@ -1,1 +1,2 @@
-pub mod home_handler;
+pub mod github_handler;
+pub mod google_handler;
