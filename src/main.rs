@@ -32,7 +32,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
         .app_data(web::Data::new( AppState { db: db.clone() } ))
         .wrap(Logger::default())
-        .configure(routes::handlers::github_handler::routes::config)
+        .configure(routes::github_handler::config)
     })
     .bind((address, port))?
     .run()
