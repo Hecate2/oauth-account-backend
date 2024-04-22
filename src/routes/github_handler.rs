@@ -8,7 +8,7 @@ struct ErrMessage {
     err: String,
 }
 
-#[get("/")]
+#[get("")]
 pub async fn greet(req: HttpRequest) -> impl Responder {
     let authen_header = match req.headers().get("Authorization") {
         Some(authen_header) => authen_header,

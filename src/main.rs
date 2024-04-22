@@ -1,4 +1,4 @@
-use actix_web::{get, middleware::Logger, web, App, HttpServer, Responder};
+use actix_web::{get, middleware, web, App, HttpServer, Responder};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection};
 use utils::app_state::AppState;
@@ -30,8 +30,9 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+        .wrap(middleware::NormalizePath::trim())
         .app_data(web::Data::new( AppState { db: db.clone() } ))
-        .wrap(Logger::default())
+        .wrap(middleware::Logger::default())
         .configure(routes::github_handler::config)
     })
     .bind((address, port))?
