@@ -1,4 +1,5 @@
 use actix_web::{get, middleware, web, App, HttpServer, Responder};
+use entity::{private_key, user};
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection};
 use utils::app_state::AppState;
@@ -25,7 +26,8 @@ async fn main() -> std::io::Result<()> {
     let database_url = (*utils::constants::DATABASE_URL).clone();
 
     let db: DatabaseConnection = Database::connect(database_url).await.unwrap();
-    init::create_tables_if_not_exists(&db).await;
+    init::create_tables_if_not_exists(&db, user::Entity).await;
+    init::create_tables_if_not_exists(&db, private_key::Entity).await;
     // Migrator::up(&db, None).await.unwrap();
 
     HttpServer::new(move || {

@@ -11,7 +11,7 @@ impl EntityName for Entity {
         Some("public")
     }
     fn table_name(&self) -> &str {
-        "user"
+        "privatekey"
     }
 }
 
@@ -21,16 +21,13 @@ pub struct Model {
     // #[sea_orm(primary_key)]
     pub public_key: String,
     // #[sea_orm(unique)]
-    pub google_id: String,  // The "sub" value returned by Google
-    // #[sea_orm(unique)]
-    pub github_id: String,  // https://api.github.com/users/Hecate2 -> id
+    pub private_key: String,  // The "sub" value returned by Google
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
 pub enum Column {
     PublicKey,
-    GoogleId,
-    GithubId,
+    PrivateKey,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DerivePrimaryKey)]
@@ -43,24 +40,28 @@ impl PrimaryKeyTrait for PrimaryKey {
     fn auto_increment() -> bool {
         false
     }
+
 }
 
 #[derive(Copy, Clone, Debug, EnumIter)]
 pub enum Relation {
-    PrivateKey,
+    PublicKey,
 }
 
 impl RelationTrait for Relation {
     fn def(&self) -> RelationDef {
         match self {
-            Self::PrivateKey => Entity::has_one(super::private_key::Entity).into(),
+            Self::PublicKey => Entity::belongs_to(super::user::Entity)
+                .from(Column::PublicKey)
+                .to(super::user::Column::PublicKey)
+                .into(),
         }
     }
 }
 
-impl Related<super::private_key::Entity> for Entity {
+impl Related<super::user::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::PrivateKey.def()
+        Relation::PublicKey.def()
     }
 }
 
@@ -70,8 +71,7 @@ impl ColumnTrait for Column {
     fn def(&self) -> ColumnDef {
         match self {
             Self::PublicKey => ColumnType::String(None).def(),
-            Self::GoogleId => ColumnType::String(None).def().indexed().unique(),
-            Self::GithubId => ColumnType::String(None).def().indexed().unique(),
+            Self::PrivateKey => ColumnType::String(None).def().unique(),
         }
     }
 }

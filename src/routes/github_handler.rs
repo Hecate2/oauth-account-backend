@@ -3,11 +3,6 @@ use sea_orm::{ConnectionTrait, Statement};
 use crate::utils::auth::get_bearer_token;
 use serde::Serialize;
 
-#[derive(Serialize)]
-struct ErrMessage {
-    err: String,
-}
-
 #[get("")]
 // Authorizaion: Bearer TOKEN
 pub async fn greet(req: HttpRequest) -> impl Responder {
