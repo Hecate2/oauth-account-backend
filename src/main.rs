@@ -1,8 +1,9 @@
 use actix_web::{get, middleware, web, App, HttpServer, Responder};
 use entity::{private_key, user};
 use migration::{Migrator, MigratorTrait};
-use sea_orm::{Database, DatabaseConnection};
+use sea_orm::{Database, DatabaseConnection, ConnectOptions};
 use utils::app_state::AppState;
+use std::time::Duration;
 
 mod utils;
 mod routes;
@@ -24,8 +25,14 @@ async fn main() -> std::io::Result<()> {
     let port = (*utils::constants::PORT).clone();
     let address = (*utils::constants::ADDRESS).clone();
     let database_url = (*utils::constants::DATABASE_URL).clone();
-
-    let db: DatabaseConnection = Database::connect(database_url).await.unwrap();
+    let mut opt: ConnectOptions = ConnectOptions::new(database_url);
+    opt.max_connections(32)
+        .min_connections(4)
+        .connect_timeout(Duration::from_secs(8))
+        .idle_timeout(Duration::from_secs(8))
+        .max_lifetime(Duration::from_secs(8))
+        .sqlx_logging(true);
+    let db: DatabaseConnection = Database::connect(opt).await.unwrap();
     init::create_tables_if_not_exists(&db, user::Entity).await;
     init::create_tables_if_not_exists(&db, private_key::Entity).await;
     // Migrator::up(&db, None).await.unwrap();

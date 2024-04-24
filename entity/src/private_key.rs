@@ -2,6 +2,7 @@
 
 use sea_orm;
 use sea_orm::entity::prelude::*;
+use serde::Serialize;
 
 #[derive(Copy, Clone, Default, Debug, DeriveEntity)]
 pub struct Entity;
@@ -15,7 +16,7 @@ impl EntityName for Entity {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, DeriveModel, DeriveActiveModel)]
+#[derive(Clone, Debug, PartialEq, Eq, DeriveModel, DeriveActiveModel, Serialize)]
 // #[sea_orm(table_name = "user")]
 pub struct Model {
     // #[sea_orm(primary_key)]
