@@ -39,6 +39,7 @@ async fn main() -> std::io::Result<()> {
         .data(arc_app_state.clone())
         .wrap(middleware::Logger::default())
         .configure(routes::github_handler::config)
+        .configure(routes::google_handler::config)
     })
     .bind((address, port))?
     .run()
