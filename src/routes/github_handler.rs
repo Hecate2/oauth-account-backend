@@ -1,4 +1,4 @@
-use actix_web::{get, post, web::{self, head}, Either, HttpRequest, HttpResponse, Responder};
+use actix_web::{error::{ErrorBadRequest, HttpError}, get, post, web::{self, head}, Either, HttpRequest, HttpResponse, Responder};
 use sea_orm::{ColumnTrait, ConnectionTrait, DatabaseConnection, EntityOrSelect, EntityTrait, QueryFilter, SelectColumns, Statement};
 use crate::utils::{app_state::{self, AppState}, auth::get_bearer_token, err_message::ErrMessage};
 use entity::user;
@@ -14,9 +14,14 @@ async fn get_account_id(token: String) -> Result<String, Box<dyn Error>> {
     .header("User-Agent", "reqwest")
     .header("Authorization", "Bearer ".to_owned() + &token)
     .send().await?;
-    let body = res.text().await?;
-    println!("Body:\n{}", body);
-    Ok(body.to_string())
+    // let body = res.text().await?;
+    // println!("Body:\n{}", body);
+    let json_body: serde_json::Value = res.json().await?;
+    let id = match json_body.get("id") {
+        Some(v) => v,
+        None => return Err(Box::new(ErrorBadRequest("No id returned from github"))),
+    };
+    Ok(id.to_string())
 }
 
 #[get("")]
@@ -31,13 +36,18 @@ pub async fn get_public_key(req: HttpRequest, state: web::Data<Arc<AppState>>) -
         Err(e) => return HttpResponse::Unauthorized().content_type("application/json").json(ErrMessage{err: "Invalid token".to_string()}),
     };
     let db_pool = &state.db;
-    let public_key = 
+    let public_key = match
         user::Entity::find()
         .filter(user::Column::GithubId.eq(github_id))
         .select_column(user::Column::PublicKey)
         .one(db_pool)
-        .await
-        .expect("Not registered").unwrap();
+        .await {
+            Ok(v) => match v {
+                Some(s) => s,
+                None => return HttpResponse::BadRequest().content_type("application/json").json(ErrMessage{err: "Not registered".to_string()}),
+            },
+            Err(e) => return HttpResponse::InternalServerError().content_type("application/json").json(ErrMessage{err: e.to_string()}),
+        };
     HttpResponse::Ok().json(public_key)
 }
 

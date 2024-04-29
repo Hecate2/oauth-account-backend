@@ -1,6 +1,7 @@
 use actix_web::{Either, HttpRequest, HttpResponse};
 use super::err_message::ErrMessage;
 
+// Get XXX from Authorization: Bearer XXX
 pub fn get_bearer_token(req: HttpRequest) -> Either<String, HttpResponse>{
     let auth_header = match req.headers().get("Authorization") {
         Some(authen_header) => authen_header,

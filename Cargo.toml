@@ -20,4 +20,4 @@ dotenv = "0.15.0"
 lazy_static = "1.4.0"
 sea-orm = { version = "0.12", features = [ "sqlx-postgres", "runtime-tokio-rustls", "macros" ] }
 tokio = "1.37.0"
-reqwest = "0.12.4"
+reqwest = { version= "0.12.4", features = ["json"] }
