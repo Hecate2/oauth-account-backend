@@ -24,10 +24,12 @@ async fn get_account_id(token: String) -> Result<String, Box<dyn Error>> {
     Ok(id.to_string())
 }
 
+const HEADER_KEY: &str = "X-Github";
+
 #[get("")]
-// Authorizaion: Bearer TOKEN
+// X-Github: gho...
 pub async fn get_public_key(req: HttpRequest, state: web::Data<Arc<AppState>>) -> impl Responder {
-    let token: String = match get_bearer_token(req) {
+    let token: String = match get_bearer_token(req, HEADER_KEY) {
         Either::Right(err_resp) => return err_resp,
         Either::Left(token) => token,
     };
