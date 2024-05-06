@@ -35,7 +35,7 @@ pub async fn get_public_key(req: HttpRequest, state: web::Data<Arc<AppState>>) -
     };
     let google_id = match get_account_id(token).await {
         Ok(i) => i,
-        Err(e) => return HttpResponse::Unauthorized().content_type("application/json").json(ErrMessage{err: "Invalid token".to_string()}),
+        Err(e) => return HttpResponse::Unauthorized().content_type("application/json").json(ErrMessage{err: "Invalid token".to_string(), public_key: None}),
     };
     let db_pool = &state.db;
     let public_key = match
@@ -46,9 +46,9 @@ pub async fn get_public_key(req: HttpRequest, state: web::Data<Arc<AppState>>) -
         .await {
             Ok(v) => match v {
                 Some(s) => s,
-                None => return HttpResponse::BadRequest().content_type("application/json").json(ErrMessage{err: "Not registered".to_string()}),
+                None => return HttpResponse::BadRequest().content_type("application/json").json(ErrMessage{err: "Not registered".to_string(), public_key: None}),
             },
-            Err(e) => return HttpResponse::InternalServerError().content_type("application/json").json(ErrMessage{err: e.to_string()}),
+            Err(e) => return HttpResponse::InternalServerError().content_type("application/json").json(ErrMessage{err: e.to_string(), public_key: None}),
         };
     HttpResponse::Ok().json(public_key)
 }

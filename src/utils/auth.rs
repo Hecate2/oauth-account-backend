@@ -6,7 +6,7 @@ pub fn get_bearer_token(req: HttpRequest, header_key: &str) -> Either<String, Ht
     let auth_header = match req.headers().get(header_key) {
         Some(authen_header) => authen_header,
         None => {
-            return Either::Right(HttpResponse::Unauthorized().content_type("application/json").json(ErrMessage{err: "No auth".to_string()}));
+            return Either::Right(HttpResponse::Unauthorized().content_type("application/json").json(ErrMessage{err: "No auth".to_string(), public_key: None}));
         }
     };
     let auth_str = auth_header.to_str().unwrap_or("");

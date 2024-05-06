@@ -21,3 +21,7 @@ lazy_static = "1.4.0"
 sea-orm = { version = "0.12", features = [ "sqlx-postgres", "runtime-tokio-rustls", "macros" ] }
 tokio = "1.37.0"
 reqwest = { version= "0.12.4", features = ["json"] }
+p256 = { version = "0.13.2", features = ["arithmetic", "ecdsa", "ecdh", "pem"]}
+k256 = { version = "0.13.3", features = ["arithmetic", "ecdsa", "ecdh", "pem"]}
+rand_core = "0.6.4"
+bs58 = { version = "0.5.1", features = ["check"] }
