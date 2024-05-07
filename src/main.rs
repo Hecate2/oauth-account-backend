@@ -8,7 +8,7 @@ use std::sync::Arc;
 mod utils;
 mod routes;
 mod init;
-
+mod crypto;
 
 
 #[actix_web::main] // or #[tokio::main]

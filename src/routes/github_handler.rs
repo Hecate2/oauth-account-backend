@@ -1,5 +1,4 @@
 use actix_web::{error::{ErrorBadRequest, HttpError}, get, post, web::{self, head}, Either, HttpRequest, HttpResponse, Responder};
-use k256::{sha2::digest::typenum::bit, Secp256k1};
 use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityOrSelect, EntityTrait, QueryFilter, SelectColumns, Statement};
 use sea_orm::ActiveValue::{Set, NotSet, Unchanged};
 use crate::utils::{app_state::{self, AppState}, auth::get_bearer_token, err_message::ErrMessage};
@@ -8,16 +7,7 @@ use entity::private_key;
 use reqwest;
 use std::sync::Arc;
 use std::error::Error;
-use p256::{
-    ecdsa::{
-        signature::{Signer, Verifier},
-        SigningKey, VerifyingKey,
-    },
-    pkcs8::EncodePrivateKey,
-    PublicKey, SecretKey,
-};
-use rand_core::OsRng;
-use bs58;
+use crate::crypto::bitcoin_keypair;
 
 async fn get_account_id(token: String) -> Result<String, Box<dyn Error>> {
     // TODO: call github API with the token and get user id
@@ -86,8 +76,18 @@ pub async fn create_account(req: HttpRequest, state: web::Data<Arc<AppState>>) -
             Ok(v) => match v {
                 Some(s) => return HttpResponse::BadRequest().content_type("application/json").json(ErrMessage{err: "Already registered".to_string(), public_key: None}),
                 None => {
+                    let secp = Secp256k1::new();
+                    let (secret_key, public_key) = secp.generate_keypair(&mut OsRng);
+                    let pk_sha256 = Sha256Hash::hash(&public_key.serialize()).to_byte_array();
+                    let mut pk_ripemp160 = Ripemp160Hash::hash(&pk_sha256).to_byte_array().to_vec();
+                    pk_ripemp160.insert(0, 0x00);
+                    let checksum = &Sha256Hash::hash(
+                        &Sha256Hash::hash(&pk_ripemp160)
+                            .to_byte_array()
+                    )[..4];
                     let secret_key = SecretKey::random(&mut rand_core::OsRng);
-                    let wif = bs58::encode(secret_key.to_bytes()).with_check().into_string();
+                    let secret_key_bytes = secret_key.to_bytes();
+                    let wif = bs58::encode(secret_key_bytes).with_check().into_string();
                     let public_key = secret_key.public_key().to_sec1_bytes();
                     let public_key_hex_string = public_key.iter()
                         .map(|b| format!("{:02x}", b).to_string())
@@ -124,5 +124,6 @@ pub fn config(config: &mut web::ServiceConfig){
     .service(
         web::scope("/github")
         .service(get_public_key)
+        .service(create_account)
     );
 }
