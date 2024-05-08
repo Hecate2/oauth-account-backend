@@ -28,7 +28,7 @@ const HEADER_KEY: &str = "X-Google";
 
 #[get("")]
 // X-Google: ya29....
-pub async fn get_public_key(req: HttpRequest, state: web::Data<Arc<AppState>>) -> impl Responder {
+pub async fn get_private_key(req: HttpRequest, state: web::Data<Arc<AppState>>) -> impl Responder {
     let token: String = match get_bearer_token(req, HEADER_KEY) {
         Either::Right(err_resp) => return err_resp,
         Either::Left(token) => token,
@@ -38,10 +38,10 @@ pub async fn get_public_key(req: HttpRequest, state: web::Data<Arc<AppState>>) -
         Err(e) => return HttpResponse::Unauthorized().content_type("application/json").json(ErrMessage{err: "Invalid token".to_string(), public_key: None}),
     };
     let db_pool = &state.db;
-    let public_key = match
+    let private_key = match
         user::Entity::find()
         .filter(user::Column::GoogleId.eq(google_id))
-        .select_column(user::Column::PublicKey)
+        .select_column(user::Column::PrivateKey)
         .one(db_pool)
         .await {
             Ok(v) => match v {
@@ -50,13 +50,13 @@ pub async fn get_public_key(req: HttpRequest, state: web::Data<Arc<AppState>>) -
             },
             Err(e) => return HttpResponse::InternalServerError().content_type("application/json").json(ErrMessage{err: e.to_string(), public_key: None}),
         };
-    HttpResponse::Ok().json(public_key)
+    HttpResponse::Ok().json(private_key)
 }
 
 pub fn config(config: &mut web::ServiceConfig){
     config
     .service(
         web::scope("/google")
-        .service(get_public_key)
+        .service(get_private_key)
     );
 }

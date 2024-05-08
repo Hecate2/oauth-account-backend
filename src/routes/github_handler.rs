@@ -3,7 +3,6 @@ use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection
 use sea_orm::ActiveValue::{Set, NotSet, Unchanged};
 use crate::utils::{app_state::{self, AppState}, auth::get_bearer_token, err_message::ErrMessage};
 use entity::user;
-use entity::private_key;
 use reqwest;
 use std::sync::Arc;
 use std::error::Error;
@@ -40,10 +39,10 @@ pub async fn get_public_key(req: HttpRequest, state: web::Data<Arc<AppState>>) -
         Err(e) => return HttpResponse::Unauthorized().content_type("application/json").json(ErrMessage{err: "Invalid token".to_string(), public_key: None}),
     };
     let db_pool = &state.db;
-    let public_key = match
+    let private_key = match
         user::Entity::find()
         .filter(user::Column::GithubId.eq(github_id))
-        .select_column(user::Column::PublicKey)
+        .select_column(user::Column::PrivateKey)
         .one(db_pool)
         .await {
             Ok(v) => match v {
@@ -52,7 +51,7 @@ pub async fn get_public_key(req: HttpRequest, state: web::Data<Arc<AppState>>) -
             },
             Err(e) => return HttpResponse::InternalServerError().content_type("application/json").json(ErrMessage{err: e.to_string(), public_key: None}),
         };
-    HttpResponse::Ok().json(public_key)
+    HttpResponse::Ok().json(private_key)
 }
 
 #[post("")]
@@ -67,28 +66,19 @@ pub async fn create_account(req: HttpRequest, state: web::Data<Arc<AppState>>) -
         Err(e) => return HttpResponse::Unauthorized().content_type("application/json").json(ErrMessage{err: "Invalid token".to_string(), public_key: None}),
     };
     let db_pool = &state.db;
-    let public_key = match
+    let private_key = match
         user::Entity::find()
         .filter(user::Column::GithubId.eq(github_id.to_owned()))
-        .select_column(user::Column::PublicKey)
+        .select_column(user::Column::PrivateKey)
         .one(db_pool)
         .await {
             Ok(v) => match v {
                 Some(s) => return HttpResponse::BadRequest().content_type("application/json").json(ErrMessage{err: "Already registered".to_string(), public_key: None}),
                 None => {
                     let bitcoin_keypair = BitcoinKeypair::new();
-                    let key_pair_db = private_key::ActiveModel {
-                        private_key: Set(bitcoin_keypair.secret_key_wif),
-                        public_key: Set(bitcoin_keypair.public_key.to_owned()),
-                    };
-                    match key_pair_db.insert(db_pool).await {
-                        Ok(i) => i,
-                        Err(e) => return HttpResponse::Unauthorized().content_type("application/json").json(ErrMessage{err: e.to_string(), public_key: None}),                
-                    };
-
                     let user_db = user::ActiveModel {
-                        public_key: Set(bitcoin_keypair.public_key.to_owned()),
-                        github_id: Set(github_id),
+                        private_key: Set(bitcoin_keypair.secret_key_wif.to_owned()),
+                        github_id: Set(Some(github_id)),
                         ..Default::default()
                     };
                     match user_db.insert(db_pool).await {
@@ -100,7 +90,7 @@ pub async fn create_account(req: HttpRequest, state: web::Data<Arc<AppState>>) -
             },
             Err(e) => return HttpResponse::InternalServerError().content_type("application/json").json(ErrMessage{err: e.to_string(), public_key: None}),
         };
-    HttpResponse::Ok().json(public_key)
+    HttpResponse::Ok().json(private_key)
 }
 
 pub fn config(config: &mut web::ServiceConfig){

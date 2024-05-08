@@ -1,5 +1,5 @@
 use actix_web::{get, middleware, web, App, HttpServer, Responder};
-use entity::{private_key, user};
+use entity::user;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{Database, DatabaseConnection, ConnectOptions};
 use utils::app_state::AppState;
@@ -30,7 +30,7 @@ async fn main() -> std::io::Result<()> {
     let arc_app_state = Arc::new(app_state);
     
     init::create_tables_if_not_exists(&arc_app_state.db, user::Entity).await;
-    init::create_tables_if_not_exists(&arc_app_state.db, private_key::Entity).await;
+    // init::create_tables_if_not_exists(&arc_app_state.db, private_key::Entity).await;
     // Migrator::up(&db, None).await.unwrap();
 
     HttpServer::new(move || {

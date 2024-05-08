@@ -20,23 +20,23 @@ impl EntityName for Entity {
 // #[sea_orm(table_name = "user")]
 pub struct Model {
     // #[sea_orm(primary_key)]
-    pub public_key: String,
+    pub private_key: String,
     // #[sea_orm(unique)]
-    pub google_id: String,  // The "sub" value returned by Google
+    pub google_id: Option<String>,  // The "sub" value returned by Google
     // #[sea_orm(unique)]
-    pub github_id: String,  // https://api.github.com/users/Hecate2 -> id
+    pub github_id: Option<String>,  // https://api.github.com/users/Hecate2 -> id
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
 pub enum Column {
-    PublicKey,
+    PrivateKey,
     GoogleId,
     GithubId,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DerivePrimaryKey)]
 pub enum PrimaryKey {
-    PublicKey,
+    PrivateKey,
 }
 
 impl PrimaryKeyTrait for PrimaryKey {
@@ -46,33 +46,17 @@ impl PrimaryKeyTrait for PrimaryKey {
     }
 }
 
-#[derive(Copy, Clone, Debug, EnumIter)]
-pub enum Relation {
-    PrivateKey,
-}
-
-impl RelationTrait for Relation {
-    fn def(&self) -> RelationDef {
-        match self {
-            Self::PrivateKey => Entity::has_one(super::private_key::Entity).into(),
-        }
-    }
-}
-
-impl Related<super::private_key::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::PrivateKey.def()
-    }
-}
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {}
 
 impl ColumnTrait for Column {
     type EntityName = Entity;
 
     fn def(&self) -> ColumnDef {
         match self {
-            Self::PublicKey => ColumnType::String(None).def(),
-            Self::GoogleId => ColumnType::String(None).def().indexed().unique(),
-            Self::GithubId => ColumnType::String(None).def().indexed().unique(),
+            Self::PrivateKey => ColumnType::String(None).def(),
+            Self::GoogleId => ColumnType::String(None).def().indexed().unique().nullable(),
+            Self::GithubId => ColumnType::String(None).def().indexed().unique().nullable(),
         }
     }
 }
