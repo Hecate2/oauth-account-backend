@@ -7,7 +7,7 @@ use entity::private_key;
 use reqwest;
 use std::sync::Arc;
 use std::error::Error;
-use crate::crypto::bitcoin_keypair;
+use crate::crypto::bitcoin_keypair::BitcoinKeypair;
 
 async fn get_account_id(token: String) -> Result<String, Box<dyn Error>> {
     // TODO: call github API with the token and get user id
@@ -76,26 +76,10 @@ pub async fn create_account(req: HttpRequest, state: web::Data<Arc<AppState>>) -
             Ok(v) => match v {
                 Some(s) => return HttpResponse::BadRequest().content_type("application/json").json(ErrMessage{err: "Already registered".to_string(), public_key: None}),
                 None => {
-                    let secp = Secp256k1::new();
-                    let (secret_key, public_key) = secp.generate_keypair(&mut OsRng);
-                    let pk_sha256 = Sha256Hash::hash(&public_key.serialize()).to_byte_array();
-                    let mut pk_ripemp160 = Ripemp160Hash::hash(&pk_sha256).to_byte_array().to_vec();
-                    pk_ripemp160.insert(0, 0x00);
-                    let checksum = &Sha256Hash::hash(
-                        &Sha256Hash::hash(&pk_ripemp160)
-                            .to_byte_array()
-                    )[..4];
-                    let secret_key = SecretKey::random(&mut rand_core::OsRng);
-                    let secret_key_bytes = secret_key.to_bytes();
-                    let wif = bs58::encode(secret_key_bytes).with_check().into_string();
-                    let public_key = secret_key.public_key().to_sec1_bytes();
-                    let public_key_hex_string = public_key.iter()
-                        .map(|b| format!("{:02x}", b).to_string())
-                        .collect::<Vec<String>>()
-                        .join("");
+                    let bitcoin_keypair = BitcoinKeypair::new();
                     let key_pair_db = private_key::ActiveModel {
-                        private_key: Set(wif),
-                        public_key: Set(public_key_hex_string.to_owned()),
+                        private_key: Set(bitcoin_keypair.secret_key_wif),
+                        public_key: Set(bitcoin_keypair.public_key.to_owned()),
                     };
                     match key_pair_db.insert(db_pool).await {
                         Ok(i) => i,
@@ -103,7 +87,7 @@ pub async fn create_account(req: HttpRequest, state: web::Data<Arc<AppState>>) -
                     };
 
                     let user_db = user::ActiveModel {
-                        public_key: Set(public_key_hex_string.to_owned()),
+                        public_key: Set(bitcoin_keypair.public_key.to_owned()),
                         github_id: Set(github_id),
                         ..Default::default()
                     };
@@ -111,7 +95,7 @@ pub async fn create_account(req: HttpRequest, state: web::Data<Arc<AppState>>) -
                         Ok(i) => i,
                         Err(e) => return HttpResponse::Unauthorized().content_type("application/json").json(ErrMessage{err: e.to_string(), public_key: None}),                
                     };
-                    public_key_hex_string
+                    bitcoin_keypair.public_key
                 },
             },
             Err(e) => return HttpResponse::InternalServerError().content_type("application/json").json(ErrMessage{err: e.to_string(), public_key: None}),
