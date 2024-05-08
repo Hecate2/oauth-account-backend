@@ -2,7 +2,8 @@ use rand::rngs::OsRng;
 use secp256k1::Secp256k1;
 use secp256k1::hashes::{sha256::Hash as Sha256Hash, ripemd160::Hash as Ripemp160Hash, Hash};
 
-const VERSION_BYTE_MAINNET: u8 = 0x00;
+const ADDRESS_VERSION_BYTE_MAINNET: u8 = 0x00;
+const WIF_VERSION_BYTE_MAINNET: u8 = 0x80;
 
 pub struct BitcoinKeypair {
     pub secret_key_wif: String,
@@ -21,7 +22,7 @@ impl BitcoinKeypair {
             .join("");
         let pk_sha256 = Sha256Hash::hash(&public_key_bytes).to_byte_array();
         let mut pk_ripemp160 = Ripemp160Hash::hash(&pk_sha256).to_byte_array().to_vec();
-        pk_ripemp160.insert(0, VERSION_BYTE_MAINNET);
+        pk_ripemp160.insert(0, ADDRESS_VERSION_BYTE_MAINNET);
         let checksum = &Sha256Hash::hash(
             &Sha256Hash::hash(&pk_ripemp160)
                 .to_byte_array()
@@ -30,7 +31,8 @@ impl BitcoinKeypair {
         let address = bs58::encode(pk_ripemp160).into_string();
 
         let mut secret_key_bytes = secret_key.secret_bytes().to_vec();
-        secret_key_bytes.insert(0, 0x80);
+        secret_key_bytes.insert(0, WIF_VERSION_BYTE_MAINNET);
+        secret_key_bytes.push(0x01);  // compressed
 
         let checksum = &Sha256Hash::hash(
             &Sha256Hash::hash(&secret_key_bytes)
