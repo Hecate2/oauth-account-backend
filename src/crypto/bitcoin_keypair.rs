@@ -65,6 +65,7 @@ mod tests {
     use super::*;
 
     #[test]
+    // ref: https://iancoleman.io/bitcoin-key-compression/
     fn test_addr() {
         let keypair = BitcoinKeypair::from_compressed_wif("KyLkhT5K4zMGCFErLttxLS5GNNtyGE92JR1fYcX5qk5Q8aoRkyrd").unwrap();
         assert_eq!(keypair.address, "19GKxUAfpozs8RXuknuZBCAKvJw3SiNYcd");

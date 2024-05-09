@@ -83,6 +83,7 @@ mod tests {
     use super::*;
 
     #[test]
+    // ref: https://privatekeys.pw/calc
     fn test_addr() {
         let keypair = EthereumKeypair::from_compressed_wif("KyLkhT5K4zMGCFErLttxLS5GNNtyGE92JR1fYcX5qk5Q8aoRkyrd").unwrap();
         assert_eq!(keypair.address, "0x5cf4e71E0d8466A958934Ce4e0D00b8ed1A3A973");
