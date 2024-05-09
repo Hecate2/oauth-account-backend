@@ -7,15 +7,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'rust_actix'",
+            "name": "Debug executable 'oauth_account_backend'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=rust_actix",
-                    "--package=rust_actix"
+                    "--bin=oauth_account_backend",
+                    "--package=oauth_account_backend"
                 ],
                 "filter": {
-                    "name": "rust_actix",
+                    "name": "oauth_account_backend",
                     "kind": "bin"
                 }
             },
@@ -25,16 +25,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'rust_actix'",
+            "name": "Debug unit tests in executable 'oauth_account_backend'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=rust_actix",
-                    "--package=rust_actix"
+                    "--bin=oauth_account_backend",
+                    "--package=oauth_account_backend"
                 ],
                 "filter": {
-                    "name": "rust_actix",
+                    "name": "oauth_account_backend",
                     "kind": "bin"
                 }
             },

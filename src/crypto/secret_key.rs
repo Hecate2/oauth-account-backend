@@ -26,7 +26,7 @@ pub fn new_secret_key_32bytes() -> Vec<u8> {
 }
 
 pub fn new_secret_key_wif(compressed: bool, version_byte: u8) -> String {
-    let mut secret_key_bytes = new_secret_key_32bytes();
+    let secret_key_bytes = new_secret_key_32bytes();
     let wif = bytes_32_to_wif(secret_key_bytes, compressed, version_byte);
     return wif;
 }
