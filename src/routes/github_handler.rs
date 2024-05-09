@@ -6,7 +6,7 @@ use entity::user;
 use reqwest;
 use std::sync::Arc;
 use std::error::Error;
-use crate::crypto::bitcoin_keypair::BitcoinKeypair;
+use crate::crypto::secret_key::new_secret_key_wif_default_version;
 
 async fn get_account_id(token: String) -> Result<String, Box<dyn Error>> {
     // TODO: call github API with the token and get user id
@@ -75,9 +75,9 @@ pub async fn create_account(req: HttpRequest, state: web::Data<Arc<AppState>>) -
             Ok(v) => match v {
                 Some(s) => return HttpResponse::BadRequest().content_type("application/json").json(ErrMessage{err: "Already registered".to_string(), public_key: None}),
                 None => {
-                    let bitcoin_keypair = BitcoinKeypair::new();
+                    let wif = new_secret_key_wif_default_version(true);
                     let user_db = user::ActiveModel {
-                        private_key: Set(bitcoin_keypair.secret_key_wif.to_owned()),
+                        private_key: Set(wif.to_owned()),
                         github_id: Set(Some(github_id)),
                         ..Default::default()
                     };
@@ -85,7 +85,7 @@ pub async fn create_account(req: HttpRequest, state: web::Data<Arc<AppState>>) -
                         Ok(i) => i,
                         Err(e) => return HttpResponse::Unauthorized().content_type("application/json").json(ErrMessage{err: e.to_string(), public_key: None}),                
                     };
-                    bitcoin_keypair.public_key
+                    wif
                 },
             },
             Err(e) => return HttpResponse::InternalServerError().content_type("application/json").json(ErrMessage{err: e.to_string(), public_key: None}),
