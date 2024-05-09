@@ -7,7 +7,7 @@ use std::sync::Arc;
 use std::error::Error;
 use serde::Serialize;
 
-async fn get_account_id(token: String) -> Result<String, Box<dyn Error>> {
+async fn get_account_id(token: &str) -> Result<String, Box<dyn Error>> {
     // TODO: call github API with the token and get user id
     let client = reqwest::ClientBuilder::new().build()?;
     let res = client.get("https://www.googleapis.com/oauth2/v3/userinfo?access_token=".to_owned() + &token)
@@ -33,7 +33,7 @@ pub async fn get_private_key(req: HttpRequest, state: web::Data<Arc<AppState>>) 
         Either::Right(err_resp) => return err_resp,
         Either::Left(token) => token,
     };
-    let google_id = match get_account_id(token).await {
+    let google_id = match get_account_id(&token).await {
         Ok(i) => i,
         Err(e) => return HttpResponse::Unauthorized().content_type("application/json").json(ErrMessage{err: "Invalid token".to_string(), public_key: None}),
     };

@@ -22,7 +22,7 @@ impl BitcoinKeypair {
     }
 
     // checksum not checked!
-    pub fn from_compressed_wif(wif: String) -> Result<BitcoinKeypair, Box<dyn Error>> {
+    pub fn from_compressed_wif(wif: &str) -> Result<BitcoinKeypair, Box<dyn Error>> {
         let mut secret_key_bytes: [u8; 38] = [0x00; 38];
         bs58::decode(wif).onto(&mut secret_key_bytes)?;
         Ok(BitcoinKeypair::from_secret_key_slice(&secret_key_bytes[1..33])?)
@@ -57,5 +57,16 @@ impl BitcoinKeypair {
         let secret_key_compressed_wif = bytes_32_to_wif(secret_key_bytes, true, WIF_VERSION_BYTE_MAINNET);        
 
         BitcoinKeypair{ secret_key_compressed_wif: secret_key_compressed_wif, public_key: public_key_string, address: address}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_addr() {
+        let keypair = BitcoinKeypair::from_compressed_wif("KyLkhT5K4zMGCFErLttxLS5GNNtyGE92JR1fYcX5qk5Q8aoRkyrd").unwrap();
+        assert_eq!(keypair.address, "19GKxUAfpozs8RXuknuZBCAKvJw3SiNYcd");
     }
 }

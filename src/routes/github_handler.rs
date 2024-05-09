@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::error::Error;
 use crate::crypto::secret_key::new_secret_key_wif_default_version;
 
-async fn get_account_id(token: String) -> Result<String, Box<dyn Error>> {
+async fn get_account_id(token: &str) -> Result<String, Box<dyn Error>> {
     // TODO: call github API with the token and get user id
     let client = reqwest::ClientBuilder::new().build()?;
     let res = client.get("https://api.github.com/user")
@@ -34,7 +34,7 @@ pub async fn get_public_key(req: HttpRequest, state: web::Data<Arc<AppState>>) -
         Either::Right(err_resp) => return err_resp,
         Either::Left(token) => token,
     };
-    let github_id = match get_account_id(token).await {
+    let github_id = match get_account_id(&token).await {
         Ok(i) => i,
         Err(e) => return HttpResponse::Unauthorized().content_type("application/json").json(ErrMessage{err: "Invalid token".to_string(), public_key: None}),
     };
@@ -61,7 +61,7 @@ pub async fn create_account(req: HttpRequest, state: web::Data<Arc<AppState>>) -
         Either::Right(err_resp) => return err_resp,
         Either::Left(token) => token,
     };
-    let github_id = match get_account_id(token).await {
+    let github_id = match get_account_id(&token).await {
         Ok(i) => i,
         Err(e) => return HttpResponse::Unauthorized().content_type("application/json").json(ErrMessage{err: "Invalid token".to_string(), public_key: None}),
     };

@@ -1,3 +1,3 @@
 pub trait OAuthHandler {
-    fn get_account_id(token: String) -> String;
+    fn get_account_id(token: &str) -> String;
 }
