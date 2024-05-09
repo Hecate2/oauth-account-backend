@@ -2,7 +2,6 @@ use std::error::Error;
 use rand::rngs::OsRng;
 use secp256k1;
 use secp256k1::Secp256k1;
-use secp256k1::hashes::{sha256::Hash as Sha256Hash, ripemd160::Hash as Ripemp160Hash, Hash};
 use sha3::{Digest, Keccak256};
 use crate::crypto::secret_key::bytes_32_to_wif;
 
